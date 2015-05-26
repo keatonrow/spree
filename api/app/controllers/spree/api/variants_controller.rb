@@ -7,6 +7,9 @@ module Spree
         authorize! :create, Spree::Variant
         @variant = scope.new(variant_params)
         if @variant.save
+
+          @product.import
+
           respond_with(@variant, status: 201, default_template: :show)
         else
           invalid_resource!(@variant)
@@ -16,6 +19,9 @@ module Spree
       def destroy
         @variant = scope.accessible_by(current_ability, :destroy).find(params[:id])
         @variant.destroy
+
+        @product.import
+
         respond_with(@variant, status: 204)
       end
 
@@ -40,6 +46,9 @@ module Spree
       def update
         @variant = scope.accessible_by(current_ability, :update).find(params[:id])
         if @variant.update_attributes(variant_params)
+
+          @product.import
+
           respond_with(@variant, status: 200, default_template: :show)
         else
           invalid_resource!(@product)
