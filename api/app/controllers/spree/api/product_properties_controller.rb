@@ -23,6 +23,9 @@ module Spree
         authorize! :create, Spree::ProductProperty
         @product_property = @product.product_properties.new(product_property_params)
         if @product_property.save
+
+          @product.import
+
           respond_with(@product_property, status: 201, default_template: :show)
         else
           invalid_resource!(@product_property)
@@ -33,6 +36,9 @@ module Spree
         if @product_property
           authorize! :update, @product_property
           @product_property.update_attributes(product_property_params)
+
+          @product.import
+
           respond_with(@product_property, status: 200, default_template: :show)
         else
           invalid_resource!(@product_property)
@@ -43,6 +49,9 @@ module Spree
         if @product_property
           authorize! :destroy, @product_property
           @product_property.destroy
+
+          @product.import
+
           respond_with(@product_property, status: 204)
         else
           invalid_resource!(@product_property)
