@@ -71,6 +71,26 @@ namespace :gem do
 end
 
 namespace :gem do
+  desc "run rake gem for all gems"
+
+  task :gemfury do
+    version = File.read(File.expand_path("../SPREE_VERSION", __FILE__)).strip
+
+    %w(core api backend frontend sample cmd).each do |gem_name|
+      FileUtils.rm_rf("#{gem_name}/pkg")
+
+      puts "########################### #{gem_name} #########################"
+      puts "Sending #{gem_name} to gemfury"
+      cmd = "cd #{gem_name} && rake build && curl -F package=@pkg/spree_#{gem_name}-#{version}.gem https://CzCp6H9mKPjVkpzhHqqm@push.fury.io/keatonrow/"; puts cmd; system cmd
+    end
+    puts "Deleting pkg directory"
+    FileUtils.rm_rf("pkg")
+
+    cmd = "rake gem && curl -F package=@pkg/spree-#{version}.gem https://CzCp6H9mKPjVkpzhHqqm@push.fury.io/keatonrow/"; puts cmd; system cmd
+  end
+end
+
+namespace :gem do
   desc "run gem install for all gems"
   task :install do
     version = File.read(File.expand_path("../SPREE_VERSION", __FILE__)).strip
