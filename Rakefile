@@ -76,7 +76,8 @@ namespace :gem do
   task :gemfury do
     version = File.read(File.expand_path("../SPREE_VERSION", __FILE__)).strip
 
-    %w(core api backend frontend sample cmd).each do |gem_name|
+    # %w(core api backend frontend sample cmd).each do |gem_name|
+     %w(core api backend frontend cmd).each do |gem_name|
       FileUtils.rm_rf("#{gem_name}/pkg")
 
       puts "########################### #{gem_name} #########################"
