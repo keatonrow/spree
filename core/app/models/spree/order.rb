@@ -377,8 +377,8 @@ module Spree
     # If so add error and restart checkout.
     def ensure_line_item_variants_are_not_deleted
       if line_items.any?{ |li| !li.variant || li.variant.paranoia_destroyed? }
-        errors.add(:base, Spree.t(:deleted_variants_present))
         restart_checkout_flow
+        errors.add(:base, Spree.t(:deleted_variants_present))
         false
       else
         true
@@ -387,8 +387,8 @@ module Spree
 
     def ensure_line_items_are_in_stock
       if insufficient_stock_lines.present?
-        errors.add(:base, Spree.t(:insufficient_stock_lines_present))
         restart_checkout_flow
+        errors.add(:base, Spree.t(:insufficient_stock_lines_present))
         false
       else
         true
