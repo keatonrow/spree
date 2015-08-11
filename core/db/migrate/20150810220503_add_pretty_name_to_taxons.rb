@@ -2,16 +2,15 @@ class AddPrettyNameToTaxons < ActiveRecord::Migration
   def change
     add_column :spree_taxons, :pretty_name, :string, default: '', null: false
 
-    Spree::Taxon.each do |taxon|
-      taxon.pretty_name = generate_pretty_name(taxon)
-      taxon.save
+    Spree::Taxon.all.each do |taxon|
+      taxon.update_column(:pretty_name, generate_pretty_name(taxon))
     end
   end
 
   def generate_pretty_name(taxon)
-    pretty_name = taxons.ancestors.inject("") do |name, ancestor|
+    pretty_name = taxon.ancestors.inject("") do |name, ancestor|
       name += "#{ancestor.name} -> "
     end
-    pretty_name += "#{name}"
+    pretty_name += "#{taxon.name}"
   end
 end
