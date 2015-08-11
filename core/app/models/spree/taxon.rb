@@ -7,7 +7,6 @@ module Spree
     friendly_id :permalink, slug_column: :permalink, use: :slugged
     before_create :set_permalink
     before_save :set_pretty_name
-    after_initialize :generate_pretty_name
 
     acts_as_nested_set dependent: :destroy
 
@@ -75,16 +74,6 @@ module Spree
 
     def active_products
       products.active
-    end
-
-    def generate_pretty_name
-      if pretty_name.empty && name.present?
-        pretty_name = self.ancestors.inject("") do |name, ancestor|
-          name += "#{ancestor.name} -> "
-        end
-        pretty_name += "#{name}"
-        save
-      end
     end
 
     # awesome_nested_set sorts by :lft and :rgt. This call re-inserts the child
