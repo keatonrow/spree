@@ -85,8 +85,6 @@ module Spree
       end
     end
 
-    self.whitelisted_ransackable_attributes = ['number']
-
     extend DisplayMoney
     money_methods :cost, :discounted_cost, :final_price, :item_cost
     alias display_amount display_cost
