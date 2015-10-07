@@ -5,8 +5,8 @@ describe Spree::Payment, :type => :model do
   let(:refund_reason) { create(:refund_reason) }
 
   let(:gateway) do
-    gateway = Spree::Gateway::Bogus.new(:active => true)
-    allow(gateway).to receive_messages :source_required => true
+    gateway = Spree::Gateway::Bogus.create(active: true, name: 'Bogus')
+    allow(gateway).to receive_messages source_required: true
     gateway
   end
 
@@ -486,6 +486,10 @@ describe Spree::Payment, :type => :model do
           Spree::Payment.create(:amount => 100, :order => order)
         }.not_to change { order.payment_total }
       end
+
+      it "requires a payment method" do
+        expect(Spree::Payment.create(amount: 100, order: order)).to have(1).error_on(:payment_method)
+      end
     end
 
     context 'when the payment was completed but now void' do
@@ -509,7 +513,7 @@ describe Spree::Payment, :type => :model do
       it "updates payment_state and shipments" do
         expect(order.updater).to receive(:update_payment_state)
         expect(order.updater).to receive(:update_shipment_state)
-        Spree::Payment.create(:amount => 100, :order => order)
+        Spree::Payment.create(amount: 100, order: order, payment_method: gateway)
       end
     end
 
@@ -873,6 +877,34 @@ describe Spree::Payment, :type => :model do
       (%w{N P S U} << "").each do |char|
         payment.update_attribute(:cvv_response_code, char)
         expect(payment.is_cvv_risky?).to eq(true)
+      end
+    end
+  end
+
+  describe "#editable?" do
+    subject { payment }
+
+    before do
+      subject.state = state
+    end
+
+    context "when the state is 'checkout'" do
+      let(:state) { 'checkout' }
+
+      its(:editable?) { should be(true) }
+    end
+
+    context "when the state is 'pending'" do
+      let(:state) { 'pending' }
+
+      its(:editable?) { should be(true) }
+    end
+
+    %w[processing completed failed void invalid].each do |state|
+      context "when the state is '#{state}'" do
+        let(:state) { state }
+
+        its(:editable?) { should be(false) }
       end
     end
   end

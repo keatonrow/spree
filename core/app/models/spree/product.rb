@@ -31,7 +31,7 @@ module Spree
     has_many :properties, through: :product_properties
 
     has_many :classifications, dependent: :delete_all, inverse_of: :product
-    has_many :taxons, through: :classifications
+    has_many :taxons, through: :classifications, before_remove: :remove_taxon
     has_and_belongs_to_many :promotion_rules, join_table: :spree_products_promotion_rules
 
     belongs_to :tax_category, class_name: 'Spree::TaxCategory'
@@ -74,6 +74,7 @@ module Spree
     after_create :build_variants_from_option_values_hash, if: :option_values_hash
 
     after_destroy :punch_slug
+    after_restore :update_slug_history
 
     after_initialize :ensure_master
 
@@ -90,7 +91,7 @@ module Spree
     validates :name, presence: true
     validates :price, presence: true, if: proc { Spree::Config[:require_master_price] }
     validates :shipping_category_id, presence: true
-    validates :slug, length: { minimum: 3 }, uniqueness: { allow_blank: true }
+    validates :slug, length: { minimum: 3 }, allow_blank: true, uniqueness: true
 
     attr_accessor :option_values_hash
 
@@ -267,6 +268,10 @@ module Spree
       update_column :slug, "#{Time.now.to_i}_#{slug}"[0..254] unless frozen?
     end
 
+    def update_slug_history
+      self.save!
+    end
+
     def anything_changed?
       changed? || @nested_changes
     end
@@ -343,6 +348,10 @@ module Spree
       Spree::Taxonomy.where(id: taxonomy_ids).update_all(updated_at: Time.current)
     end
 
+    def remove_taxon(taxon)
+      removed_classifications = classifications.where(taxon: taxon)
+      removed_classifications.each &:remove_from_list
+    end
   end
 end
 
