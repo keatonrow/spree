@@ -94,7 +94,11 @@ module Spree
 
       private
         def product_params
-          params.require(:product).permit(permitted_product_attributes)
+          product_params = params.require(:product).permit(permitted_product_attributes)
+          if product_params[:taxon_ids].present?
+            product_params[:taxon_ids] = product_params[:taxon_ids].split(',')
+          end
+          product_params
         end
 
         def variants_params
