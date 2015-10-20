@@ -98,7 +98,7 @@ module Spree
         params[:q] ||= {}
         params[:q][:deleted_at_null] ||= "1"
 
-        params[:q][:s] ||= "name asc"
+        params[:q][:s] ||= "created_at desc"
         @collection = super
         # Don't delete params[:q][:deleted_at_null] here because it is used in view to check the
         # checkbox for 'q[deleted_at_null]'. This also messed with pagination when deleted_at_null is checked.
