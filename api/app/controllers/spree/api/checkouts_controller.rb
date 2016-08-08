@@ -2,6 +2,7 @@ module Spree
   module Api
     class CheckoutsController < Spree::Api::BaseController
       before_action :associate_user, only: :update
+      before_action :load_order_with_lock, only:[:next, :advance, :update]
 
       include Spree::Core::ControllerHelpers::Auth
       include Spree::Core::ControllerHelpers::Order
@@ -9,7 +10,6 @@ module Spree
       skip_before_action :set_current_order
 
       def next
-        load_order(true)
         authorize! :update, @order, order_token
         @order.next!
         respond_with(@order, default_template: 'spree/api/orders/show', status: 200)
@@ -18,14 +18,12 @@ module Spree
       end
 
       def advance
-        load_order(true)
         authorize! :update, @order, order_token
         while @order.next; end
         respond_with(@order, default_template: 'spree/api/orders/show', status: 200)
       end
 
       def update
-        load_order(true)
         authorize! :update, @order, order_token
 
         if @order.update_from_params(params, permitted_checkout_attributes, request.headers.env)
@@ -63,13 +61,21 @@ module Spree
 
         def load_order(lock = false)
           @order = Spree::Order.lock(lock).find_by!(number: params[:id])
-          raise_insufficient_quantity and return if @order.insufficient_stock_lines.present?
+          return if raise_insufficient_quantity
           @order.state = params[:state] if params[:state]
           state_callback(:before)
         end
 
+        def load_order_with_lock
+          load_order(true)
+        end
+
         def raise_insufficient_quantity
-          respond_with(@order, default_template: 'spree/api/orders/insufficient_quantity')
+          unless @order.ensure_line_items_are_in_stock
+            respond_with(@order, default_template: 'spree/api/orders/could_not_transition', status: 422)
+            return true
+          end
+          false
         end
 
         def state_callback(before_or_after = :before)
