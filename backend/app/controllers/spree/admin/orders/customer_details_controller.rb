@@ -50,7 +50,6 @@ module Spree
           def model_class
             Spree::Order
           end
-
       end
     end
   end
