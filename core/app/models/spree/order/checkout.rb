@@ -76,21 +76,6 @@ module Spree
                 transition to: :awaiting_return
               end
 
-              if states[:payment]
-                before_transition to: :complete do |order|
-                  if order.payment_required? && order.payments.valid.empty?
-                    order.errors.add(:base, Spree.t(:no_payment_found))
-                    false
-                  elsif order.payment_required?
-                    order.process_payments!
-                  end
-                end
-                after_transition to: :complete, do: :persist_user_credit_card
-                before_transition to: :payment, do: :set_shipments_cost
-                before_transition to: :payment, do: :create_tax_charge!
-                before_transition to: :payment, do: :assign_default_credit_card
-              end
-
               before_transition from: :cart, do: :ensure_line_items_present
 
               if states[:address]
@@ -109,8 +94,24 @@ module Spree
               before_transition to: :resumed, do: :ensure_line_item_variants_are_not_deleted
               before_transition to: :resumed, do: :ensure_line_items_are_in_stock
 
+              # Calls matter to prevent payment processing until validation succeeds
               before_transition to: :complete, do: :ensure_line_item_variants_are_not_deleted
               before_transition to: :complete, do: :ensure_line_items_are_in_stock
+
+              if states[:payment]
+                before_transition to: :complete do |order|
+                  if  order.payment_required? && order.payments.valid.empty?
+                    order.errors.add(:base, Spree.t(:no_payment_found))
+                    false
+                  elsif order.errors.blank? && order.payment_required?
+                    order.process_payments!
+                  end
+                end
+                after_transition to: :complete, do: :persist_user_credit_card
+                before_transition to: :payment, do: :set_shipments_cost
+                before_transition to: :payment, do: :create_tax_charge!
+                before_transition to: :payment, do: :assign_default_credit_card
+              end
 
               after_transition to: :complete, do: :finalize!
               after_transition to: :resumed, do: :after_resume
