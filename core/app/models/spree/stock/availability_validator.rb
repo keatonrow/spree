@@ -2,7 +2,9 @@ module Spree
   module Stock
     class AvailabilityValidator < ActiveModel::Validator
       def validate(line_item)
-        ensure_in_stock(line_item, line_item.quantity)
+        unless line_item.variant.deleted_at
+          ensure_in_stock(line_item, line_item.quantity)
+        end
         line_item.errors[:quantity].empty?
       end
 
